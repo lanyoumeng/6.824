@@ -1,12 +1,8 @@
 package shardkv
 
-
 import "6.824/labrpc"
-import "6.824/raft"
 import "sync"
 import "6.824/labgob"
-
-
 
 type Op struct {
 	// Your definitions here.
@@ -17,8 +13,8 @@ type Op struct {
 type ShardKV struct {
 	mu           sync.Mutex
 	me           int
-	rf           *raft.Raft
-	applyCh      chan raft.ApplyMsg
+	rf           *raft1.Raft
+	applyCh      chan raft1.ApplyMsg
 	make_end     func(string) *labrpc.ClientEnd
 	gid          int
 	ctrlers      []*labrpc.ClientEnd
@@ -26,7 +22,6 @@ type ShardKV struct {
 
 	// Your definitions here.
 }
-
 
 func (kv *ShardKV) Get(args *GetArgs, reply *GetReply) {
 	// Your code here.
@@ -46,7 +41,6 @@ func (kv *ShardKV) Kill() {
 	kv.rf.Kill()
 	// Your code here, if desired.
 }
-
 
 //
 // servers[] contains the ports of the servers in this group.
@@ -76,7 +70,7 @@ func (kv *ShardKV) Kill() {
 // StartServer() must return quickly, so it should start goroutines
 // for any long-running work.
 //
-func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxraftstate int, gid int, ctrlers []*labrpc.ClientEnd, make_end func(string) *labrpc.ClientEnd) *ShardKV {
+func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft1.Persister, maxraftstate int, gid int, ctrlers []*labrpc.ClientEnd, make_end func(string) *labrpc.ClientEnd) *ShardKV {
 	// call labgob.Register on structures you want
 	// Go's RPC library to marshall/unmarshall.
 	labgob.Register(Op{})
@@ -93,9 +87,8 @@ func StartServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister,
 	// Use something like this to talk to the shardctrler:
 	// kv.mck = shardctrler.MakeClerk(kv.ctrlers)
 
-	kv.applyCh = make(chan raft.ApplyMsg)
-	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
-
+	kv.applyCh = make(chan raft1.ApplyMsg)
+	kv.rf = raft1.Make(servers, me, persister, kv.applyCh)
 
 	return kv
 }

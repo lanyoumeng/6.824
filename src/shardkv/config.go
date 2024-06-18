@@ -12,7 +12,6 @@ import "math/rand"
 import "encoding/base64"
 import "sync"
 import "runtime"
-import "6.824/raft"
 import "strconv"
 import "fmt"
 import "time"
@@ -45,7 +44,7 @@ func random_handles(kvh []*labrpc.ClientEnd) []*labrpc.ClientEnd {
 type group struct {
 	gid       int
 	servers   []*ShardKV
-	saved     []*raft.Persister
+	saved     []*raft1.Persister
 	endnames  [][]string
 	mendnames [][]string
 }
@@ -239,7 +238,7 @@ func (cfg *config) StartServer(gi int, i int) {
 	if gg.saved[i] != nil {
 		gg.saved[i] = gg.saved[i].Copy()
 	} else {
-		gg.saved[i] = raft.MakePersister()
+		gg.saved[i] = raft1.MakePersister()
 	}
 	cfg.mu.Unlock()
 
@@ -277,7 +276,7 @@ func (cfg *config) StartCtrlerserver(i int) {
 		cfg.net.Enable(endname, true)
 	}
 
-	p := raft.MakePersister()
+	p := raft1.MakePersister()
 
 	cfg.ctrlerservers[i] = shardctrler.StartServer(ends, i, p)
 
@@ -365,7 +364,7 @@ func make_config(t *testing.T, n int, unreliable bool, maxraftstate int) *config
 		cfg.groups[gi] = gg
 		gg.gid = 100 + gi
 		gg.servers = make([]*ShardKV, cfg.n)
-		gg.saved = make([]*raft.Persister, cfg.n)
+		gg.saved = make([]*raft1.Persister, cfg.n)
 		gg.endnames = make([][]string, cfg.n)
 		gg.mendnames = make([][]string, cfg.nctrlers)
 		for i := 0; i < cfg.n; i++ {
