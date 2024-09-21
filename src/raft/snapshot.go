@@ -24,7 +24,11 @@ func (args InstallSnapshotArgs) String() string {
 
 }
 
-// InstallSnapshot RPC handler. 响应leader的snapshot请求
+// InstallSnapshot RPC handler.
+// 主节点从上层应用接收到快照请求（压缩日志），表示上层应用已经创建了一个上层应用的快照
+// 然后主节点将快照和元数据持久化到磁盘，并更新自己的状态
+
+// Snapshot 的数据是上层应用传递给 Raft 主节点的，Raft 主节点会将这个数据传递给其他节点。
 func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapshotReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
@@ -65,13 +69,13 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 	rf.log.Log[0].Command = nil
 	rf.log.Log[0].Term = args.LastIncludedTerm
 
+	rf.lastApplied = args.LastIncludedIndex
+	rf.commitIndex = args.LastIncludedIndex
+
 	rf.snapshotTerm = args.LastIncludedTerm
 	rf.snapshotIndex = args.LastIncludedIndex
 	rf.waitingSnapshot = args.Snapshot
 	rf.beginSnapshot = true
-
-	rf.lastApplied = args.LastIncludedIndex
-	rf.commitIndex = args.LastIncludedIndex
 
 	// 保存快照数据
 	rf.SnapshotL(args.LastIncludedIndex, args.Snapshot)
@@ -137,6 +141,10 @@ func (rf *Raft) processInstallSnapshotReplyL(peer int, args *InstallSnapshotArgs
 // all info up to and including index. this means the
 // service no longer needs the Log through (and including)
 // that index. Raft should now trim its Log as much as possible.
+//该服务表示，它已经创建了一个快照，其中包含所有信息，包括索引。这意味着服务
+//不再需要通过该索引(并包括该索引)的日志。Raft 现在应该尽可能地修剪其 Log。
+
+// 主节点从上层应用接收到快照请求
 // 丢弃 index 之前的日志条目。
 // 更新 SnapshotIndex 和 SnapshotTerm 以反映快照的状态。
 // 使用 persister.Save() 持久化当前状态和快照。
@@ -156,7 +164,7 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 	rf.snapshotTerm = k.Term
 	rf.snapshotIndex = index
 	rf.waitingSnapshot = snapshot
-	rf.beginSnapshot = true
+	rf.beginSnapshot = true //
 
 	// 丢弃index之前的日志条目
 	//这里index处的日志也是没用的，因为index处的日志是快照的最后一条日志
@@ -179,12 +187,12 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 	e.Encode(rf.snapshotIndex)
 	e.Encode(rf.snapshotTerm)
 	e.Encode(rf.beginSnapshot)
-
+	//
 	//e.Encode(rf.commitIndex)
-	//e.Encode(rf.lastApplied)
+	e.Encode(rf.lastApplied)
 	//e.Encode(rf.nextIndex)
 	//e.Encode(rf.matchIndex)
-	//
+
 	raftstate := w.Bytes()
 	rf.persister.Save(raftstate, snapshot)
 
@@ -227,7 +235,7 @@ func (rf *Raft) SnapshotL(index int, snapshot []byte) {
 	e.Encode(rf.beginSnapshot)
 
 	//e.Encode(rf.commitIndex)
-	//e.Encode(rf.lastApplied)
+	e.Encode(rf.lastApplied)
 	//e.Encode(rf.nextIndex)
 	//e.Encode(rf.matchIndex)
 

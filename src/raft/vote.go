@@ -107,10 +107,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 // the struct itself.
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
 
-	// 这里加锁因为上层没有锁，但日志需要读取， 不然会出现并发读写
-	rf.mu.Lock()
-	Debug(dLeader, "S%v term:%v, sendRequestVote to %v ，args:%v\n", rf.me, rf.currentTerm, server, args)
-	rf.mu.Unlock()
+	//// 这里加锁因为上层没有锁，但日志需要读取， 不然会出现并发读写
+	//rf.mu.Lock()
+	//Debug(dLeader, "S%v term:%v, sendRequestVote to %v ，args:%v\n", rf.me, rf.currentTerm, server, args)
+	//rf.mu.Unlock()
 
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
 	return ok
@@ -256,8 +256,8 @@ func (rf *Raft) becomeLeaderL() {
 	for i := range rf.nextIndex {
 		rf.nextIndex[i] = rf.log.lastindex() + 1
 	}
-	//for i := range rf.matchIndex {
-	//	rf.matchIndex[i] = 0
-	//}
+	for i := range rf.matchIndex {
+		rf.matchIndex[i] = 0
+	}
 	rf.persist()
 }

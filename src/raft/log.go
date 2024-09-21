@@ -15,7 +15,7 @@ func (e Entry) String() string {
 
 // Log 结构体表示一系列的日志条目
 type Log struct {
-	Log    []Entry // 日志条目切片，存储实际的日志条目
+	Log    []Entry // 日志条目切片，存储实际的日志条目  索引从Index0开始计算
 	Index0 int     // 日志的起始索引
 }
 

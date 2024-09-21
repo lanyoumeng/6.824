@@ -124,10 +124,10 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 func (rf *Raft) sendAppendEntries(peer int, args *AppendEntriesArgs, reply *AppendEntriesReply) bool {
 
-	// 这里加锁因为上层没有锁，但日志需要读取， 不然会出现并发读写
-	rf.mu.Lock()
-	Debug(dLeader, "S%d ,state:%v, currentTerm:%v，发送追加日志rpc到 %d , args:%v", rf.me, rf.state, rf.currentTerm, peer, args)
-	rf.mu.Unlock()
+	//// 这里加锁因为上层没有锁，但日志需要读取， 不然会出现并发读写
+	//rf.mu.Lock()
+	//Debug(dLeader, "S%d ,state:%v, currentTerm:%v，发送追加日志rpc到 %d , args:%v", rf.me, rf.state, rf.currentTerm, peer, args)
+	//rf.mu.Unlock()
 
 	return rf.peers[peer].Call("Raft.AppendEntries", args, reply)
 }
@@ -170,6 +170,7 @@ func (rf *Raft) sendAppendL(peer int, heartbeat bool) {
 	next := rf.nextIndex[peer]
 
 	//发送快照
+	//
 	if (next <= rf.snapshotIndex || next <= rf.log.start()) && rf.snapshotIndex > 0 {
 		go rf.sendSnapshot(peer)
 		return
@@ -195,7 +196,6 @@ func (rf *Raft) sendAppendL(peer int, heartbeat bool) {
 
 	go func() {
 		var reply AppendEntriesReply
-
 		ok := rf.sendAppendEntries(peer, args, &reply)
 		if ok {
 			rf.mu.Lock()

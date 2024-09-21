@@ -10,13 +10,13 @@ package raft
 // snapshots) on the applyCh, but set CommandValid to false for these
 // other uses.
 type ApplyMsg struct {
-	CommandValid bool
+	CommandValid bool // true if the ApplyMsg contains a newly committed Log entry
 	Command      interface{}
 	CommandIndex int
 	IsLeader     bool
 	Term         int
 	// For 2D:
-	SnapshotValid bool
+	SnapshotValid bool // true if the ApplyMsg contains a snapshot
 	Snapshot      []byte
 	SnapshotTerm  int
 	SnapshotIndex int
@@ -26,15 +26,14 @@ func (rf *Raft) applier() {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	rf.lastApplied = 0
-	// 如果lastApplied < snapshotIndex，那么就加载快照
-	if rf.lastApplied+1 <= rf.log.start() {
-		// reset from a snapshot
-		rf.lastApplied = rf.log.start()
-	}
+	//rf.lastApplied = 0
+	//if rf.lastApplied+1 <= rf.log.start() {
+	//	// reset from a snapshot
+	//	rf.lastApplied = rf.log.start()
+	//}
 
+	// 只要没有被杀死，就一直循环应用日志
 	for !rf.killed() {
-
 		if rf.beginSnapshot {
 			am := ApplyMsg{}
 			//DPrintf("server %d apply snapshot", rf.me)

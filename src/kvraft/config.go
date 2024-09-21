@@ -11,6 +11,7 @@ import "math/rand"
 import "encoding/base64"
 import "sync"
 import "runtime"
+import "6.824/raft"
 import "fmt"
 import "time"
 import "sync/atomic"
@@ -46,7 +47,7 @@ type config struct {
 	net          *labrpc.Network
 	n            int
 	kvservers    []*KVServer
-	saved        []*raft1.Persister
+	saved        []*raft.Persister
 	endnames     [][]string // names of each server's sending ClientEnds
 	clerks       map[*Clerk][]string
 	nextClientId int
@@ -307,7 +308,7 @@ func (cfg *config) StartServer(i int) {
 	if cfg.saved[i] != nil {
 		cfg.saved[i] = cfg.saved[i].Copy()
 	} else {
-		cfg.saved[i] = raft1.MakePersister()
+		cfg.saved[i] = raft.MakePersister()
 	}
 	cfg.mu.Unlock()
 
@@ -369,7 +370,7 @@ func make_config(t *testing.T, n int, unreliable bool, maxraftstate int) *config
 	cfg.net = labrpc.MakeNetwork()
 	cfg.n = n
 	cfg.kvservers = make([]*KVServer, cfg.n)
-	cfg.saved = make([]*raft1.Persister, cfg.n)
+	cfg.saved = make([]*raft.Persister, cfg.n)
 	cfg.endnames = make([][]string, cfg.n)
 	cfg.clerks = make(map[*Clerk][]string)
 	cfg.nextClientId = cfg.n + 1000 // client ids start 1000 above the highest serverid
